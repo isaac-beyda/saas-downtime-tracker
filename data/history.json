@@ -1,211 +1,417 @@
 {
- "updated": "2026-10-09",
- "days": [
-  {
-   "date": "2026-10-09",
-   "taken_at": "2026-10-09T20:26:53.937Z",
-   "vendors": {
-    "onepassword": {
-     "status": "operational",
-     "incidents": 0
+  "updated": "2026-10-10",
+  "days": [
+    {
+      "date": "2026-10-09",
+      "taken_at": "2026-10-09T20:26:53.937Z",
+      "vendors": {
+        "onepassword": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "aws": {
+          "status": "major",
+          "incidents": 2
+        },
+        "airtable": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "amplitude": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "anthropic": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "asana": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "auth0": {
+          "status": "partial",
+          "incidents": 0
+        },
+        "canva": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "clickup": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "cloudflare": {
+          "status": "partial",
+          "incidents": 3
+        },
+        "confluence": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "datadog": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "digitalocean": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "discord": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "docker": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "docusign": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "duo": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "figma": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "github": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "gitlab": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "google-workspace": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "grafana-cloud": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "harness": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "hashicorp": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "hubspot": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "intercom": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "jira": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "launchdarkly": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "microsoft": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "mixpanel": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "monday": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "mongodb-cloud": {
+          "status": "operational",
+          "incidents": 1
+        },
+        "netlify": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "notion": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "openai": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "pagerduty": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "plaid": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "salesforce": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "segment": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "sentinelone": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "shopify": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "slack": {
+          "status": "unknown",
+          "incidents": 1
+        },
+        "snowflake": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "snyk": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "supabase": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "twilio": {
+          "status": "degraded",
+          "incidents": 5
+        },
+        "vercel": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "webflow": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "zendesk": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "zoom": {
+          "status": "degraded",
+          "incidents": 1
+        }
+      }
     },
-    "aws": {
-     "status": "major",
-     "incidents": 2
-    },
-    "airtable": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "amplitude": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "anthropic": {
-     "status": "degraded",
-     "incidents": 1
-    },
-    "asana": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "auth0": {
-     "status": "partial",
-     "incidents": 0
-    },
-    "canva": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "clickup": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "cloudflare": {
-     "status": "partial",
-     "incidents": 3
-    },
-    "confluence": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "datadog": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "digitalocean": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "discord": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "docker": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "docusign": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "duo": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "figma": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "github": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "gitlab": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "google-workspace": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "grafana-cloud": {
-     "status": "degraded",
-     "incidents": 1
-    },
-    "harness": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "hashicorp": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "hubspot": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "intercom": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "jira": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "launchdarkly": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "microsoft": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "mixpanel": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "monday": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "mongodb-cloud": {
-     "status": "operational",
-     "incidents": 1
-    },
-    "netlify": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "notion": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "openai": {
-     "status": "degraded",
-     "incidents": 1
-    },
-    "pagerduty": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "plaid": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "salesforce": {
-     "status": "degraded",
-     "incidents": 1
-    },
-    "segment": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "sentinelone": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "shopify": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "slack": {
-     "status": "unknown",
-     "incidents": 1
-    },
-    "snowflake": {
-     "status": "degraded",
-     "incidents": 1
-    },
-    "snyk": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "supabase": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "twilio": {
-     "status": "degraded",
-     "incidents": 5
-    },
-    "vercel": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "webflow": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "zendesk": {
-     "status": "operational",
-     "incidents": 0
-    },
-    "zoom": {
-     "status": "degraded",
-     "incidents": 1
+    {
+      "date": "2026-10-10",
+      "taken_at": "2026-10-10T13:26:54.442Z",
+      "vendors": {
+        "onepassword": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "aws": {
+          "status": "major",
+          "incidents": 2
+        },
+        "airtable": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "amplitude": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "anthropic": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "asana": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "auth0": {
+          "status": "partial",
+          "incidents": 0
+        },
+        "canva": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "clickup": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "cloudflare": {
+          "status": "partial",
+          "incidents": 3
+        },
+        "confluence": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "datadog": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "digitalocean": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "discord": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "docker": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "docusign": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "duo": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "figma": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "github": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "gitlab": {
+          "status": "operational",
+          "incidents": 1
+        },
+        "google-workspace": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "grafana-cloud": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "harness": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "hashicorp": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "hubspot": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "intercom": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "jira": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "launchdarkly": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "microsoft": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "mixpanel": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "monday": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "mongodb-cloud": {
+          "status": "operational",
+          "incidents": 1
+        },
+        "netlify": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "notion": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "openai": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "pagerduty": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "plaid": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "salesforce": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "segment": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "sentinelone": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "shopify": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "slack": {
+          "status": "unknown",
+          "incidents": 1
+        },
+        "snowflake": {
+          "status": "degraded",
+          "incidents": 1
+        },
+        "snyk": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "supabase": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "twilio": {
+          "status": "degraded",
+          "incidents": 6
+        },
+        "vercel": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "webflow": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "zendesk": {
+          "status": "operational",
+          "incidents": 0
+        },
+        "zoom": {
+          "status": "operational",
+          "incidents": 0
+        }
+      }
     }
-   }
-  }
- ]
+  ]
 }
