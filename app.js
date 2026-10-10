@@ -457,6 +457,8 @@ let nextRefreshAt = null;
 const REFRESH_MS = 15 * 60 * 1000;
 const OPEN = new Set(); /* detail-section ids the user expanded; preserved across re-renders */
 let firstPaintDone = false; /* card entrance animation plays only on the very first paint */
+/* versioned so vendor-list updates bypass CDN edge caches deterministically */
+const VENDORS_URL = 'data/vendors.json?v=20261010b';
 
 /* ---------- rendering ---------- */
 function pillClass(s) { return 'pill pill-' + s; }
@@ -663,7 +665,7 @@ function tickCountdown() {
 /* ---------- boot ---------- */
 async function boot() {
   try {
-    const r = await fetch('data/vendors.json', { cache: 'no-store' });
+    const r = await fetch(VENDORS_URL, { cache: 'no-store' });
     VENDORS = await r.json();
   } catch (e) {
     $('#grid').innerHTML = '<div class="empty-state"><h3>Could not load vendor list</h3><p>data/vendors.json failed to load. Serve this folder over HTTP and retry.</p></div>';
