@@ -60,7 +60,12 @@
     <div class="kpi kpi-neutral">
       <span class="kpi-label">In maintenance</span>
       <span class="kpi-value mono" id="kpi-maintenance">–</span>
-      <span class="kpi-sub">scheduled work underway</span>
+      <span class="kpi-sub">vendors in maintenance now</span>
+    </div>
+    <div class="kpi kpi-unknown">
+      <span class="kpi-label">Unknown</span>
+      <span class="kpi-value mono" id="kpi-unknown">–</span>
+      <span class="kpi-sub">no browser-readable feed</span>
     </div>
   </section>
 
@@ -82,7 +87,16 @@
     <span class="result-count mono" id="result-count"></span>
   </section>
 
-  <section class="grid" id="grid" aria-live="polite" aria-label="Vendor status cards"></section>
+  <section class="grid" id="grid" aria-label="Vendor status cards">
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+    <div class="card skeleton"><div class="card-head"><div class="sk sk-logo"></div><div style="flex:1"><div class="sk sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk sk-line" style="width:35%"></div></div><div class="sk sk-pill"></div></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>
+  </section>
 
   <footer class="footer">
     <p>Every status above is pulled live from that vendor&rsquo;s <em>official</em> public status feed — no third-party aggregators.

@@ -45,12 +45,47 @@ function timeAgo(iso) {
   if (!iso) return '—';
   const t = new Date(iso).getTime();
   if (isNaN(t)) return '—';
-  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  const diff = Date.now() - t;
+  if (diff < 0) { /* future-dated (e.g. scheduled maintenance) */
+    const mins = Math.round(-diff / 60000);
+    if (mins < 60) return 'in ' + mins + ' min';
+    const h = Math.round(mins / 60);
+    if (h < 48) return 'in ' + h + ' hr';
+    return 'in ' + Math.round(h / 24) + 'd';
+  }
+  const mins = Math.max(0, Math.round(diff / 60000));
   if (mins < 1) return 'just now';
   if (mins < 60) return mins + ' min ago';
   const h = Math.round(mins / 60);
   if (h < 24) return h + ' hr ago';
   return Math.round(h / 24) + 'd ago';
+}
+
+/* truncate at a word boundary so descriptions never cut mid-word */
+function trunc(s, n) {
+  s = String(s == null ? '' : s);
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const i = cut.lastIndexOf(' ');
+  return (i > n * 0.4 ? cut.slice(0, i) : cut) + '…';
+}
+
+function plural(n, one, many) {
+  return n + ' ' + (n === 1 ? one : many);
+}
+
+function pluralWord(n, one, many) {
+  return (n === 1 ? one : many);
+}
+
+/* freshness should reflect the newest activity, not a stale feed-level timestamp */
+function freshest(r) {
+  let best = r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
+  (r.incidents || []).forEach(i => {
+    const t = i.created ? new Date(i.created).getTime() : 0;
+    if (!isNaN(t) && t > best) best = t;
+  });
+  return best ? new Date(best).toISOString() : r.updatedAt;
 }
 
 function fmtTime(iso) {
@@ -92,7 +127,7 @@ function parseStatuspage(json, vendor) {
       impact: i.impact || '',
       url: i.shortlink || vendor.status_page_url,
       created: i.created_at || null,
-      body: upd && upd.body ? upd.body.slice(0, 600) : ''
+      body: upd && upd.body ? trunc(stripHtml(upd.body), 600) : ''
     };
   });
   const maint = (json.scheduled_maintenances || []).map(m => ({
@@ -101,7 +136,7 @@ function parseStatuspage(json, vendor) {
     impact: '',
     url: m.shortlink || vendor.status_page_url,
     created: m.scheduled_for || m.created_at || null,
-    body: (m.incident_updates && m.incident_updates[0] && m.incident_updates[0].body || '').slice(0, 600)
+    body: trunc(stripHtml(m.incident_updates && m.incident_updates[0] && m.incident_updates[0].body || ''), 600)
   }));
   return {
     status: mapSpIndicator(st.indicator),
@@ -159,7 +194,7 @@ function parseGitlab(json) {
     impact: '',
     url: 'https://status.gitlab.com',
     created: i.updated || i.created || null,
-    body: stripHtml(i.message || i.body || '').slice(0, 600)
+    body: trunc(stripHtml(i.message || i.body || ''), 600)
   }));
   return {
     status: mapStatusIo(overall.status),
@@ -204,7 +239,7 @@ function parseDocusign(json, vendor) {
         impact: i.impact || '',
         url: vendor.status_page_url,
         created: i.startedAt || i.createdAt || null,
-        body: ev && ev.body ? ev.body.slice(0, 600) : ''
+        body: ev && ev.body ? trunc(stripHtml(ev.body), 600) : ''
       };
     }),
     updatedAt: (all[0] && all[0].updatedAt) || null,
@@ -230,7 +265,7 @@ function parseGoogleWorkspace(incJson, prodJson) {
       impact: '',
       url: i.uri || 'https://www.google.com/appsstatus/dashboard/',
       created: i.begin || i.created || null,
-      body: stripHtml(i.external_desc || '').slice(0, 600)
+      body: trunc(stripHtml(i.external_desc || ''), 600)
     })),
     updatedAt: (incidents[0] && incidents[0].modified) || null,
     note: ''
@@ -260,7 +295,7 @@ function parseSalesforce(incJson, prodJson) {
         impact: '',
         url: 'https://status.salesforce.com',
         created: i.createdAt || null,
-        body: tl && tl.content ? tl.content.slice(0, 600) : (i.additionalInformation || '')
+        body: trunc(stripHtml((tl && tl.content) ? tl.content : (i.additionalInformation || '')), 600)
       };
     }),
     updatedAt: (incidents[0] && incidents[0].updatedAt) || null,
@@ -293,7 +328,7 @@ function parseAWS(text) {
       impact: '',
       url: 'https://status.aws.amazon.com/',
       created: i.pubDate || null,
-      body: stripHtml(i.desc).slice(0, 600)
+      body: trunc(stripHtml(i.desc), 600)
     })),
     updatedAt: (items[0] && items[0].pubDate) || null,
     note: 'AWS publishes public health events only — overall status is inferred from events in the last 24 hours.'
@@ -317,7 +352,7 @@ function parseIncidentIoRss(text, vendor) {
       impact: '',
       url: i.link || vendor.status_page_url,
       created: i.pubDate || null,
-      body: stripHtml(i.desc).slice(0, 600)
+      body: trunc(stripHtml(i.desc), 600)
     })),
     updatedAt: (items[0] && items[0].pubDate) || null,
     note: 'Component-level data is not published by this feed — incident history only.'
@@ -325,13 +360,24 @@ function parseIncidentIoRss(text, vendor) {
 }
 
 /* ---------- loaders ---------- */
+/* per-vendor timeout so one hung feed can never stall the whole dashboard */
+const FETCH_TIMEOUT_MS = 20000;
+async function fetchWithTimeout(url, ms) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms || FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { cache: 'no-store', signal: c.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
 async function fetchJson(url) {
-  const r = await fetch(url, { cache: 'no-store' });
+  const r = await fetchWithTimeout(url);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
 async function fetchText(url) {
-  const r = await fetch(url, { cache: 'no-store' });
+  const r = await fetchWithTimeout(url);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.text();
 }
@@ -353,33 +399,38 @@ const SKIP_FETCH = {
 
 async function loadVendor(v) {
   if (SKIP_FETCH[v.key]) return unknownResult(v, SKIP_FETCH[v.key] + ' Open the official status page for live info.');
+  let r;
   try {
     switch (v.key) {
-      case 'slack': return parseSlack(await fetchJson(v.source_url), v);
-      case 'gitlab': return parseGitlab(await fetchJson(v.source_url));
-      case 'docusign': return parseDocusign(await fetchJson(v.source_url), v);
+      case 'slack': r = parseSlack(await fetchJson(v.source_url), v); break;
+      case 'gitlab': r = parseGitlab(await fetchJson(v.source_url)); break;
+      case 'docusign': r = parseDocusign(await fetchJson(v.source_url), v); break;
       case 'google-workspace': {
         const [inc, prod] = await Promise.all([
           fetchJson(v.source_url),
           fetchJson('https://www.google.com/appsstatus/dashboard/products.json')
         ]);
-        return parseGoogleWorkspace(inc, prod);
+        r = parseGoogleWorkspace(inc, prod);
+        break;
       }
       case 'salesforce': {
         const [inc, prod] = await Promise.all([
           fetchJson(v.source_url),
           fetchJson('https://api.status.salesforce.com/v1/products')
         ]);
-        return parseSalesforce(inc, prod);
+        r = parseSalesforce(inc, prod);
+        break;
       }
-      case 'aws': return parseAWS(await fetchText(v.source_url));
+      case 'aws': r = parseAWS(await fetchText(v.source_url)); break;
       case 'docker':
-      case 'intercom': return parseIncidentIoRss(await fetchText(v.source_url), v);
-      default: return parseStatuspage(await fetchJson(v.source_url), v);
+      case 'intercom': r = parseIncidentIoRss(await fetchText(v.source_url), v); break;
+      default: r = parseStatuspage(await fetchJson(v.source_url), v);
     }
   } catch (e) {
     return unknownResult(v);
   }
+  r.updatedAt = freshest(r);
+  return r;
 }
 
 /* ---------- state ---------- */
@@ -388,6 +439,8 @@ let RESULTS = new Map(); /* key -> result */
 let lastRefresh = null;
 let nextRefreshAt = null;
 const REFRESH_MS = 15 * 60 * 1000;
+const OPEN = new Set(); /* detail-section ids the user expanded; preserved across re-renders */
+let firstPaintDone = false; /* card entrance animation plays only on the very first paint */
 
 /* ---------- rendering ---------- */
 function pillClass(s) { return 'pill pill-' + s; }
@@ -431,28 +484,41 @@ function cardHtml(v, r) {
     ? r.incidents.map(incidentRow).join('')
     : '<div class="coverage-note">No incidents on record.</div>';
 
+  const staleDays = r.updatedAt ? Math.floor((Date.now() - new Date(r.updatedAt).getTime()) / 86400000) : -1;
+  const staleNote = (!r.failed && staleDays > 7)
+    ? '<div class="coverage-note">This feed last published an update ' + staleDays + 'd ago — data may be stale.</div>'
+    : '';
+
   return '<article class="' + cardCls + '" data-key="' + esc(v.key) + '">' +
     '<div class="card-head">' +
       '<div class="logo-frame">' + logoHtml(v) + '</div>' +
       '<div class="card-title"><h2>' + esc(v.name) + '</h2><div class="card-cat">' + esc(v.category) + '</div></div>' +
       '<span class="' + pillClass(r.status) + '">' + esc(STATUS_LABEL[r.status] || r.status) + '</span>' +
     '</div>' +
-    '<div class="card-stats"><span><b>' + r.components.length + '</b> functions</span>' +
-      '<span><b>' + r.incidents.length + '</b> incidents</span>' +
+    '<div class="card-stats"><span><b>' + r.components.length + '</b> ' + esc(pluralWord(r.components.length, 'function', 'functions')) + '</span>' +
+      '<span><b>' + r.incidents.length + '</b> ' + esc(pluralWord(r.incidents.length, 'incident', 'incidents')) + '</span>' +
       (bad ? '<span><b>' + bad + '</b> affected</span>' : '') +
       '<span style="margin-left:auto" class="mono" title="' + esc(fmtTime(r.updatedAt)) + '">' + esc(timeAgo(r.updatedAt)) + '</span></div>' +
     (r.note ? '<div class="coverage-note">' + esc(r.note) + '</div>' : '') +
+    staleNote +
     '<div class="details">' +
-      '<button class="details-toggle" type="button" aria-expanded="false" data-target="comp-' + esc(v.key) + '"><span>Functions (' + r.components.length + ')</span><span class="chev">▾</span></button>' +
-      '<div class="details-body" id="comp-' + esc(v.key) + '">' + compList + '</div>' +
-      '<button class="details-toggle" type="button" aria-expanded="false" data-target="inc-' + esc(v.key) + '"><span>Incidents (' + r.incidents.length + ')</span><span class="chev">▾</span></button>' +
-      '<div class="details-body" id="inc-' + esc(v.key) + '">' + incList + '</div>' +
+      detailsToggle(v.key, 'comp', 'Functions', r.components.length) +
+      '<div class="details-body' + (OPEN.has('comp-' + v.key) ? ' open' : '') + '" id="comp-' + esc(v.key) + '">' + compList + '</div>' +
+      detailsToggle(v.key, 'inc', 'Incidents', r.incidents.length) +
+      '<div class="details-body' + (OPEN.has('inc-' + v.key) ? ' open' : '') + '" id="inc-' + esc(v.key) + '">' + incList + '</div>' +
     '</div>' +
     '<div class="card-links">' +
       '<a class="link-btn" href="' + esc(v.status_page_url) + '" target="_blank" rel="noopener">Status page ↗</a>' +
       '<a class="link-btn" href="' + esc(v.support_url) + '" target="_blank" rel="noopener">' + esc(v.support_label || 'Support') + ' ↗</a>' +
     '</div>' +
   '</article>';
+}
+
+function detailsToggle(key, kind, label, n) {
+  const id = kind + '-' + key;
+  const open = OPEN.has(id);
+  return '<button class="details-toggle" type="button" aria-expanded="' + open + '" data-target="' + esc(id) + '"><span>' +
+    esc(label) + ' (' + n + ')</span><span class="chev">▾</span></button>';
 }
 
 function skeletonHtml() {
@@ -475,7 +541,7 @@ function filteredVendors() {
   return VENDORS.filter(v => {
     const r = RESULTS.get(v.key);
     if (f.cat && v.category !== f.cat) return false;
-    if (f.problemsOnly && r && ![S.DEG, S.PART, S.MAJ].includes(r.status)) return false;
+    if (f.problemsOnly && r && ![S.DEG, S.PART, S.MAJ, S.UNK].includes(r.status)) return false;
     if (f.q) {
       const hay = (v.name + ' ' + v.category + ' ' +
         (r ? r.components.map(c => c.name).join(' ') : '')).toLowerCase();
@@ -500,27 +566,32 @@ function render() {
   grid.innerHTML = list.map(v => cardHtml(v, RESULTS.get(v.key) || {
     status: S.UNK, summary: '', components: [], incidents: [], updatedAt: null, note: 'Loading…'
   })).join('');
+  if (!firstPaintDone) { grid.classList.add('painted'); firstPaintDone = true; }
   grid.querySelectorAll('.details-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const body = document.getElementById(btn.dataset.target);
       const open = body.classList.toggle('open');
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) OPEN.add(btn.dataset.target); else OPEN.delete(btn.dataset.target);
     });
   });
 }
 
 function renderKpis() {
-  let ok = 0, issues = 0, incidents = 0, maint = 0;
+  let ok = 0, issues = 0, incidents = 0, maint = 0, unknown = 0;
   RESULTS.forEach(r => {
     if (r.status === S.OK) ok++;
-    if ([S.DEG, S.PART, S.MAJ].includes(r.status)) issues++;
-    if (r.status === S.MAINT) maint++;
+    else if ([S.DEG, S.PART, S.MAJ].includes(r.status)) issues++;
+    else if (r.status === S.MAINT) maint++;
+    else unknown++;
     incidents += (r.incidents || []).filter(i => !['resolved', 'completed'].includes(String(i.status).toLowerCase())).length;
   });
   $('#kpi-operational').textContent = ok;
   $('#kpi-issues').textContent = issues;
   $('#kpi-incidents').textContent = incidents;
   $('#kpi-maintenance').textContent = maint;
+  const ku = $('#kpi-unknown');
+  if (ku) ku.textContent = unknown;
   const total = RESULTS.size;
   if (total) {
     const pct = Math.round(ok / total * 100);
@@ -538,25 +609,31 @@ function toast(msg) {
 }
 
 /* ---------- refresh cycle ---------- */
+/* Cards render progressively as each vendor's feed resolves — a slow or hung
+   feed (each has a 20s timeout) can never stall the whole dashboard. */
 async function refreshAll(manual) {
   const btn = $('#refresh-btn');
   btn.disabled = true;
   btn.classList.add('spinning');
-  if (!RESULTS.size) $('#grid').innerHTML = Array.from({ length: 8 }, skeletonHtml).join('');
-  const settled = await Promise.allSettled(VENDORS.map(v => loadVendor(v)));
-  settled.forEach((s, i) => {
-    RESULTS.set(VENDORS[i].key, s.status === 'fulfilled' ? s.value
-      : unknownResult(VENDORS[i], 'Request failed: ' + (s.reason && s.reason.message)));
+  let pending = VENDORS.length;
+  const oneDone = () => {
+    renderKpis();
+    render();
+    if (--pending) return;
+    lastRefresh = new Date();
+    nextRefreshAt = new Date(Date.now() + REFRESH_MS);
+    $('#last-updated').textContent = lastRefresh.toLocaleTimeString();
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+    const issues = [...RESULTS.values()].filter(r => [S.DEG, S.PART, S.MAJ].includes(r.status)).length;
+    if (manual) toast('Updated ' + RESULTS.size + ' vendors · ' + issues + ' with issues');
+  };
+  VENDORS.forEach(v => {
+    loadVendor(v).then(
+      r => RESULTS.set(v.key, r),
+      e => RESULTS.set(v.key, unknownResult(v, 'Request failed: ' + (e && e.message)))
+    ).then(oneDone);
   });
-  lastRefresh = new Date();
-  nextRefreshAt = new Date(Date.now() + REFRESH_MS);
-  $('#last-updated').textContent = lastRefresh.toLocaleTimeString();
-  renderKpis();
-  render();
-  btn.disabled = false;
-  btn.classList.remove('spinning');
-  const issues = [...RESULTS.values()].filter(r => [S.DEG, S.PART, S.MAJ].includes(r.status)).length;
-  if (manual) toast('Updated ' + RESULTS.size + ' vendors · ' + issues + ' with issues');
 }
 
 function tickCountdown() {
