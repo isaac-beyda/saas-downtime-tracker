@@ -255,20 +255,35 @@ function parseGoogleWorkspace(incJson, prodJson) {
   const active = incidents.filter(i => !i.end || new Date(i.end).getTime() > now);
   const affected = new Set();
   active.forEach(i => (i.affected_products || []).forEach(p => p && p.id && affected.add(p.id)));
+  let components, note = '';
+  if (products.length) {
+    components = products.map(p => ({ name: p.title || p.id, status: affected.has(p.id) ? S.DEG : S.OK }));
+  } else {
+    /* products.json is not CORS-open in browsers — derive the product list
+       from products seen across recent incidents instead of failing outright */
+    const seen = new Map();
+    incidents.forEach(i => (i.affected_products || []).forEach(p => {
+      if (p && p.id && !seen.has(p.id)) seen.set(p.id, p.title || p.id);
+    }));
+    components = [...seen.entries()].map(([id, name]) => ({ name, status: affected.has(id) ? S.DEG : S.OK }));
+    note = 'Full product catalog is not browser-readable — showing products seen in recent incidents.';
+  }
+  const gwUrl = (u) => !u ? 'https://www.google.com/appsstatus/dashboard/'
+    : (String(u).startsWith('http') ? u : 'https://www.google.com/appsstatus/dashboard/' + u);
   return {
     status: active.length ? S.DEG : S.OK,
     summary: active.length ? active.length + ' active incident(s)' : 'All systems operational',
-    components: products.map(p => ({ name: p.title || p.id, status: affected.has(p.id) ? S.DEG : S.OK })),
+    components,
     incidents: incidents.slice(0, 12).map(i => ({
       title: (i.service_name || 'Google Workspace') + ' — ' + (i.status_impact || i.severity || 'incident'),
       status: (!i.end || new Date(i.end).getTime() > now) ? 'investigating' : 'resolved',
       impact: '',
-      url: i.uri || 'https://www.google.com/appsstatus/dashboard/',
+      url: gwUrl(i.uri),
       created: i.begin || i.created || null,
-      body: trunc(stripHtml(i.external_desc || ''), 600)
+      body: trunc(stripHtml(i.external_desc || '').replace(/\*\*/g, ''), 600)
     })),
     updatedAt: (incidents[0] && incidents[0].modified) || null,
-    note: ''
+    note
   };
 }
 
@@ -408,7 +423,8 @@ async function loadVendor(v) {
       case 'google-workspace': {
         const [inc, prod] = await Promise.all([
           fetchJson(v.source_url),
-          fetchJson('https://www.google.com/appsstatus/dashboard/products.json')
+          /* products.json sends no CORS headers — resolve without it rather than failing the vendor */
+          fetchJson('https://www.google.com/appsstatus/dashboard/products.json').catch(() => null)
         ]);
         r = parseGoogleWorkspace(inc, prod);
         break;
