@@ -148,6 +148,32 @@ function parseStatuspage(json, vendor) {
   };
 }
 
+/* ---------- Auth0 (statuspage, minus deprecated environments) ----------
+   Auth0's page keeps retired PREVIEW environments (e.g. "US-3 (PREVIEW) DEPRECATED")
+   in a stale partial_outage state, which poisons the page-level indicator.
+   Health is derived from live components only. */
+function parseAuth0(json, vendor) {
+  const byId = new Map();
+  (json.components || []).forEach(c => { if (c && c.id) byId.set(c.id, c); });
+  const isDep = (c) => {
+    if (/deprecat/i.test(c.name || '')) return true;
+    const g = c.group_id && byId.get(c.group_id);
+    return !!(g && /deprecat/i.test(g.name || ''));
+  };
+  const clean = {
+    ...json,
+    components: (json.components || []).filter(c => c && !isDep(c))
+  };
+  const r = parseStatuspage(clean, vendor);
+  let status = S.OK;
+  r.components.forEach(c => { if (RANK[c.status] > RANK[status]) status = c.status; });
+  const hasActive = r.incidents.some(i => !/^(resolved|completed)$/i.test(String(i.status)));
+  if (hasActive && RANK[status] < RANK[S.DEG]) status = S.DEG;
+  r.status = status;
+  r.note = 'Deprecated preview environments are excluded from Auth0 health.';
+  return r;
+}
+
 /* ---------- Slack (custom JSON: active incidents only) ---------- */
 function parseSlack(json, vendor) {
   const active = json.active_incidents || [];
@@ -329,24 +355,30 @@ function parseRssItems(text) {
 }
 function parseAWS(text) {
   const items = parseRssItems(text);
-  const dayAgo = Date.now() - 24 * 3600 * 1000;
+  const dayMs = 24 * 3600 * 1000;
   const alarming = /disruption|degradation|impairment|outage|increased error|elevated/i;
-  const recent = items.filter(i => { const t = new Date(i.pubDate).getTime(); return !isNaN(t) && t > dayAgo; });
-  const bad = recent.filter(i => alarming.test(i.title));
+  const resolved = /resolv|restored|recovered|complete|all clear/i;
+  /* AWS posts infrequently; judge by the most recent event date in the feed,
+     not a rolling 24h window — otherwise open disruptions go stale-green. */
+  let latest = 0;
+  items.forEach(i => { const t = new Date(i.pubDate).getTime(); if (!isNaN(t) && t > latest) latest = t; });
+  const cutoff = latest ? Math.min(Date.now(), latest) - dayMs : Date.now() - dayMs;
+  const recent = items.filter(i => { const t = new Date(i.pubDate).getTime(); return !isNaN(t) && t >= cutoff; });
+  const bad = recent.filter(i => alarming.test(i.title) && !resolved.test(i.title));
   return {
     status: bad.length ? S.DEG : S.OK,
     summary: bad.length ? bad.length + ' recent service event(s)' : 'No recent service events',
     components: [],
     incidents: items.slice(0, 12).map(i => ({
       title: stripHtml(i.title),
-      status: alarming.test(i.title) ? 'monitoring' : 'resolved',
+      status: alarming.test(i.title) && !resolved.test(i.title) ? 'monitoring' : 'resolved',
       impact: '',
       url: 'https://status.aws.amazon.com/',
       created: i.pubDate || null,
       body: trunc(stripHtml(i.desc), 600)
     })),
     updatedAt: (items[0] && items[0].pubDate) || null,
-    note: 'AWS publishes public health events only — overall status is inferred from events in the last 24 hours.'
+    note: 'AWS publishes public health events only — overall status is inferred from the latest published events.'
   };
 }
 function parseIncidentIoRss(text, vendor) {
@@ -438,6 +470,7 @@ async function loadVendor(v) {
         break;
       }
       case 'aws': r = parseAWS(await fetchText(v.source_url)); break;
+      case 'auth0': r = parseAuth0(await fetchJson(v.source_url), v); break;
       case 'docker':
       case 'intercom': r = parseIncidentIoRss(await fetchText(v.source_url), v); break;
       default: r = parseStatuspage(await fetchJson(v.source_url), v);
