@@ -132,7 +132,7 @@ function parseStatuspage(json, vendor) {
   });
   const maint = (json.scheduled_maintenances || []).map(m => ({
     title: m.name || 'Scheduled maintenance',
-    status: 'scheduled',
+    status: (m.status || 'scheduled').toLowerCase().replace(/_/g, ' '),
     impact: '',
     url: m.shortlink || vendor.status_page_url,
     created: m.scheduled_for || m.created_at || null,
@@ -165,10 +165,16 @@ function parseAuth0(json, vendor) {
     components: (json.components || []).filter(c => c && !isDep(c))
   };
   const r = parseStatuspage(clean, vendor);
+  /* Derive from live components. Future scheduled maintenance must not affect
+     current status; in-progress maintenance and active incidents do. */
   let status = S.OK;
   r.components.forEach(c => { if (RANK[c.status] > RANK[status]) status = c.status; });
-  const hasActive = r.incidents.some(i => !/^(resolved|completed)$/i.test(String(i.status)));
-  if (hasActive && RANK[status] < RANK[S.DEG]) status = S.DEG;
+  for (const i of r.incidents) {
+    const st = String(i.status).toLowerCase();
+    if (/^(resolved|completed|scheduled)$/.test(st)) continue;
+    const target = (st === 'in_progress') ? S.MAINT : S.DEG;
+    if (RANK[target] > RANK[status]) status = target;
+  }
   r.status = status;
   r.note = 'Deprecated preview environments are excluded from Auth0 health.';
   return r;
