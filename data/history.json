@@ -2296,8 +2296,8 @@
           "incidents": 1
         },
         "auth0": {
-          "status": "degraded",
-          "incidents": 1
+          "status": "operational",
+          "incidents": 0
         },
         "canva": {
           "status": "operational",
